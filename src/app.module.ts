@@ -19,11 +19,27 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       useFactory: (configService: ConfigService) => {
         const dbUrl = configService.get<string>('DATABASE_URL');
         console.log(dbUrl);
+        // Parse the database URL to extract components
+        const dbUrlObj = new URL(dbUrl!);
+
         return {
           type: 'postgres',
-          url: dbUrl,
+          host: dbUrlObj.hostname,
+          port: parseInt(dbUrlObj.port, 10),
+          username: dbUrlObj.username,
+          password: dbUrlObj.password,
+          database: dbUrlObj.pathname.replace('/', ''),
           entities: [User],
           synchronize: true, // Set to false in production
+          ssl: {
+            rejectUnauthorized: false, // Only for development
+          },
+          // Add URL parameters to the config
+          extra: {
+            ssl: {
+              rejectUnauthorized: false, // Only for development
+            },
+          },
         };
       },
     }),
